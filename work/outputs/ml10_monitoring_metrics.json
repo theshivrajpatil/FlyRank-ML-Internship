@@ -1,0 +1,34 @@
+[
+  {
+    "metric":"rows",
+    "value":30000.0
+  },
+  {
+    "metric":"high_priority_share",
+    "value":0.0841333333
+  },
+  {
+    "metric":"review_share",
+    "value":0.4124333333
+  },
+  {
+    "metric":"monitor_share",
+    "value":0.5034333333
+  },
+  {
+    "metric":"median_action_score",
+    "value":0.4977418492
+  },
+  {
+    "metric":"median_days_since_last_update",
+    "value":20.0
+  },
+  {
+    "metric":"median_search_volume",
+    "value":10.0
+  },
+  {
+    "metric":"median_impressions_90d",
+    "value":731.0
+  }
+]
