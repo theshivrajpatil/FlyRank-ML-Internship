@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refresh Opportunity Scoring | FlyRank Search Intelligence Capstone</title>
+<style>
+:root { --ink:#182230; --muted:#586579; --line:#dbe2ea; --panel:#f5f7fa; --accent:#175cd3; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif; color:var(--ink); line-height:1.65; background:#fff; }
+header { background:#101828; color:#fff; padding:56px 22px; }
+header .wrap, main { max-width:980px; margin:auto; }
+.eyebrow { text-transform:uppercase; letter-spacing:.12em; font-size:.78rem; color:#b2ccff; font-weight:700; }
+h1 { font-size:clamp(2rem,5vw,3.5rem); line-height:1.1; margin:.5rem 0 1rem; }
+header p { max-width:780px; color:#e4e7ec; font-size:1.1rem; }
+main { padding:24px 22px 70px; }
+section { padding:24px 0; border-bottom:1px solid var(--line); }
+h2 { margin:0 0 12px; font-size:1.55rem; }
+h3 { margin-bottom:6px; }
+.muted { color:var(--muted); }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin:20px 0; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+.card strong { display:block; font-size:1.7rem; }
+figure { margin:22px 0; }
+figure img { display:block; width:100%; max-width:760px; height:auto; border:1px solid var(--line); border-radius:10px; }
+figcaption { color:var(--muted); font-size:.9rem; }
+table { border-collapse:collapse; width:100%; margin:16px 0; }
+th,td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
+th { background:var(--panel); }
+.callout { background:#eff8ff; border-left:4px solid var(--accent); padding:14px 18px; border-radius:6px; }
+footer { color:var(--muted); font-size:.9rem; padding-top:28px; }
+a { color:var(--accent); }
+@media(max-width:600px) { header { padding:38px 18px; } main { padding:16px 18px 50px; } }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<div class="eyebrow">Search Intelligence Capstone · FlyRank ML Internship dataset</div>
+<h1>Refresh Opportunity Scoring for Content Review</h1>
+<p>A practical evaluation of whether a transparent heuristic or a Random Forest can help prioritize content items for human refresh review.</p>
+<p class="muted">Research report · Reproducible notebook-based analysis</p>
+</div></header>
+<main>
+<section>
+<h2>Abstract</h2>
+<p>This project asks whether available content and search-performance signals can help rank items for refresh review. It uses the prepared anonymized FlyRank feature vector and compares a transparent percentile-weighted baseline with a Random Forest. Evaluation uses a grouped client holdout so that clients in the test set are not present in training. On this run, baseline Precision@50 was <strong>0.400</strong> and Random Forest Precision@50 was <strong>0.920</strong>; ROC-AUC was 0.450 for the baseline and 0.789 for the model. The results support only dataset-specific prioritization and do not establish that refreshing a page causes improved search performance.</p>
+</section>
+<section>
+<h2>1. Introduction and problem statement</h2>
+<p>Content teams have limited time for manual review. The decision supported here is which items should be inspected first, not which pages should automatically be changed. A ranked queue can make review more consistent, but its usefulness depends on whether it performs better than a simple, explainable rule and whether the evaluation avoids leakage.</p>
+</section>
+<section>
+<h2>2. Data</h2>
+<p>The analysis uses the prepared, anonymized feature vector at <code>data/processed/refresh_feature_vector.csv</code> from the repository's FlyRank ML Internship workflow. The target is the supplied <code>is_declining_label</code>. The notebook reports row and client counts at run time. It excludes client and content identifiers from model inputs, and excludes <code>trend_direction</code> and <code>trend_pct</code> because they are label-related fields. No client names, domains, URLs, private queries, credentials, or raw row-level exports are included in this paper.</p>
+<div class="cards">
+<div class="card"><span class="muted">Rows used</span><strong>30,000</strong></div>
+<div class="card"><span class="muted">Candidate features</span><strong>47</strong></div>
+<div class="card"><span class="muted">Decline-label share</span><strong>54.2%</strong></div>
+<div class="card"><span class="muted">Client overlap</span><strong>0</strong></div>
+</div>
+<p><strong>Feature examples:</strong> search_volume, competition, competition_level, cpc, content_type, main_intent, word_count, char_count, provider_used, model_used, impressions_90d, clicks_90d, pageviews_90d, sessions_90d, users_90d, engaged_sessions_90d, ai_sessions_90d, scroll_events_90d ….</p>
+<p class="muted">The exact release identifier and source date window should be stated only after confirming them against the dataset card and warehouse export used for this run. Do not infer a date range from file names alone.</p>
+</section>
+<section>
+<h2>3. Methodology</h2>
+<h3>Label and assumptions</h3>
+<p>The task is framed as ranking items associated with the supplied decline label. The label is treated as an observed dataset outcome, not a future outcome unless the source definition explicitly establishes that temporal relationship.</p>
+<h3>Baseline</h3>
+<p>The transparent baseline combines percentile ranks of available staleness, search-demand, and impression signals with weights 0.50, 0.30, and 0.20 respectively; weights are renormalized if a component is unavailable. This is a heuristic prioritization score, not a trained predictor.</p>
+<h3>Model and validation</h3>
+<p>A Random Forest with 250 trees, maximum depth 10, minimum leaf size 10, class weighting, and a fixed random seed is compared with the baseline. The split holds out 20% of client groups. Numeric values are median-imputed; categorical values are imputed with the most frequent category and one-hot encoded. The same held-out rows are used for both methods.</p>
+<p><strong>Leakage checks:</strong> target, identifiers, <code>trend_direction</code>, and <code>trend_pct</code> are excluded. Potentially suspicious feature names are printed for manual review. The split assertion verifies zero client overlap.</p>
+</section>
+<section>
+<h2>4. Results</h2>
+<p>The Random Forest ranked more positive examples in the top 50 than the transparent baseline on this held-out split. The Random Forest had higher ROC-AUC than the baseline.</p>
+<table><thead><tr><th>Method</th><th>Precision@50</th><th>ROC-AUC</th><th>Precision at 0.5</th><th>Recall at 0.5</th><th>F1 at 0.5</th></tr></thead><tbody>
+<tr><td>Transparent baseline</td><td>0.400</td><td>0.450</td><td>0.460</td><td>0.408</td><td>0.432</td></tr>
+<tr><td>Random Forest</td><td>0.920</td><td>0.789</td><td>0.687</td><td>0.766</td><td>0.724</td></tr>
+</tbody></table>
+<figure><img src="precision_at_50.png" alt="Precision at 50 comparison"><figcaption>Figure 1. Precision@50 on the held-out client set. Higher is better for a top-50 review queue.</figcaption></figure>
+<figure><img src="roc_auc.png" alt="ROC-AUC comparison"><figcaption>Figure 2. ROC-AUC on the same held-out client set. The dashed line marks chance-level discrimination.</figcaption></figure>
+<figure><img src="label_prevalence.png" alt="Label prevalence in train and test"><figcaption>Figure 3. Label prevalence in the training and held-out test partitions.</figcaption></figure>
+<p><strong>Split details:</strong> 23,837 training rows across 25 clients and 6,163 held-out rows across 7 clients. Client overlap was 0.</p>
+</section>
+<section>
+<h2>5. Limitations and honest framing</h2>
+<ul>
+<li>The label's meaning and time horizon are inherited from the prepared feature vector. If it is derived from a contemporaneous trend field, the experiment should be described as label ranking/classification, not forecasting future decline.</li>
+<li>A single grouped split can be sensitive to which clients are held out. Repeated group splits or a time-aware evaluation would strengthen the evidence.</li>
+<li>Precision@50 depends on the test-set size and positive-label prevalence. Results should be interpreted alongside the baseline and label rate.</li>
+<li>Associations in this dataset do not show that refreshing content will cause clicks, impressions, or rankings to improve.</li>
+<li>This project does not reveal or prove Google's ranking algorithm and does not guarantee generalization to all sites or industries.</li>
+</ul>
+<div class="callout"><strong>Interpretation:</strong> Treat the ranking as decision-support for human review. Do not automatically publish, delete, merge, or rewrite content based on a score alone.</div>
+</section>
+<section>
+<h2>6. Ranked recommendations and action playbook</h2>
+<ol>
+<li><strong>HIGH PRIORITY — inspect first:</strong> review high-ranked items, confirm the search need is still relevant, and check for technical/indexing issues before editing.</li>
+<li><strong>REVIEW — validate the opportunity:</strong> check recent impressions, clicks, CTR, position, engagement, and whether the page has already been updated.</li>
+<li><strong>MONITOR — avoid unnecessary edits:</strong> retain items with weak or ambiguous signals and re-check them when newer data becomes available.</li>
+</ol>
+<p>Reason codes in the internal queue include <code>STALE_CONTENT</code>, <code>HIGH_SEARCH_DEMAND</code>, and <code>GENERAL_REVIEW</code> where the relevant input fields exist. The full queue is kept in the repository output folder for internal analysis and is not embedded in this public paper.</p>
+</section>
+<section>
+<h2>7. Reproducibility</h2>
+<ul>
+<li>Notebook: <code>work/notebooks/capstone.ipynb</code> (commit this notebook after running it).</li>
+<li>Metrics: <code>work/outputs/capstone_metrics.csv</code>.</li>
+<li>Ranked queue: <code>work/outputs/capstone_ranked_review_queue.csv</code> (internal artifact; do not publish raw identifiers).</li>
+<li>Charts: <code>docs/precision_at_50.png</code>, <code>docs/roc_auc.png</code>, and <code>docs/label_prevalence.png</code>.</li>
+</ul>
+<p>To reproduce, install the repository requirements, run this notebook top-to-bottom, inspect the leakage warnings, and review the generated HTML before deployment.</p>
+</section>
+<section>
+<h2>8. Acknowledgments and data credit</h2>
+<p>Built on the <a href="https://flyrank.ai" rel="noopener noreferrer">FlyRank ML Internship dataset</a>. Thanks to the dataset and internship team for providing an anonymized basis for this educational analysis.</p>
+</section>
+<footer>
+<p>Generated from the capstone notebook. Metrics are specific to this dataset version, feature construction, split, and random seed. This report is research decision-support, not a causal study.</p>
+</footer>
+</main></body></html>
